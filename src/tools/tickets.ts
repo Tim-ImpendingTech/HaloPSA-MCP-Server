@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloTicket, HaloListResponse } from "../client/types.js";
+import type { HaloTicket, HaloAgent, HaloListResponse } from "../client/types.js";
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
@@ -234,6 +234,66 @@ export function registerTicketTools(
                   status: t.status,
                   priority: t.priority,
                   dateoccurred: t.dateoccurred,
+                })),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      return errorResult(error);
+    }
+  });
+
+  server.registerTool("halo_get_my_tickets", {
+    title: "Get My Tickets",
+    description:
+      "Get all tickets assigned to the currently authenticated agent. Automatically identifies the logged-in user via the HaloPSA API and returns their assigned tickets. No agent ID required.",
+    inputSchema: {
+      open_only: z
+        .boolean()
+        .optional()
+        .describe("Only return open tickets (default true)"),
+      ...paginationSchema,
+    },
+  }, async (args) => {
+    try {
+      const me = await client.get<HaloAgent>("/Agent/me");
+      const result = await client.get<HaloListResponse<HaloTicket>>(
+        "/Tickets",
+        {
+          agent_id: me.id,
+          open_only: args.open_only ?? true,
+          page_size: args.page_size ?? 50,
+          page_no: args.page_no ?? 1,
+          order: args.order ?? "dateoccurred",
+          orderdesc: args.orderdesc ?? true,
+          search: args.search,
+        }
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                agent: {
+                  id: me.id,
+                  name: me.name,
+                  email: me.email,
+                },
+                record_count: result.record_count,
+                tickets: result.records.map((t) => ({
+                  id: t.id,
+                  summary: t.summary,
+                  client_name: t.client_name,
+                  status: t.status,
+                  priority: t.priority,
+                  dateoccurred: t.dateoccurred,
+                  deadlinedate: t.deadlinedate,
+                  team: t.team,
                 })),
               },
               null,
