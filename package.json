@@ -1,0 +1,38 @@
+{
+  "name": "halopsa-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for the HaloPSA API - enables AI agents to manage tickets, clients, assets, and more",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "halopsa-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "keywords": [
+    "mcp",
+    "halopsa",
+    "halo",
+    "psa",
+    "itsm",
+    "model-context-protocol",
+    "ai",
+    "claude"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
