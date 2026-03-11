@@ -158,9 +158,15 @@ export interface HaloAppointment {
 
 export interface HaloKBArticle {
   id: number;
-  title?: string;
+  name?: string;        // HaloPSA API uses "name" not "title" for KB articles
+  description?: string; // Article body content
   type?: number;
   inactive?: boolean;
+  view_count?: number;
+  useful_count?: number;
+  notuseful_count?: number;
+  date_created?: string;
+  date_edited?: string;
   [key: string]: unknown;
 }
 

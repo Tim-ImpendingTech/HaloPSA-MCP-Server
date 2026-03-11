@@ -20,6 +20,62 @@ function wrapFetchError(error: unknown, context: string): Error {
   return new Error(`${context}: ${String(error)}`);
 }
 
+/**
+ * HaloPSA list endpoints do not return a generic "records" array.
+ * Instead each endpoint returns its data under an endpoint-specific key.
+ * Additionally, some lookup endpoints (Agent, Status, Team, Priority,
+ * TicketType) omit "record_count" entirely, or return a raw JSON array
+ * rather than a wrapped object.
+ *
+ * This function normalises ALL of those response shapes into:
+ *   { record_count: number, records: T[] }
+ * so that every tool handler can use result.records consistently.
+ *
+ * Cases handled:
+ *   1. Raw array          → { record_count: arr.length, records: arr }
+ *   2. { record_count, <key>: [...] }  (standard endpoints, already worked)
+ *   3. { <key>: [...] }  (lookup endpoints, missing record_count - was broken)
+ *   4. { record_count, records: [...] }  → pass-through (already correct)
+ *   5. Object with no array key at all  → { records: [] }
+ */
+function normalizeListResponse<T>(json: unknown): T {
+  // Case 1: raw array response (some lookup endpoints return bare arrays)
+  if (Array.isArray(json)) {
+    return {
+      record_count: json.length,
+      records: json,
+    } as T;
+  }
+
+  if (json !== null && typeof json === "object") {
+    const obj = json as Record<string, unknown>;
+
+    // Case 4: already normalised - pass through unchanged
+    if ("records" in obj) {
+      return json as T;
+    }
+
+    // Cases 2 & 3: find whichever key holds the data array
+    const arrayKey = Object.keys(obj).find(
+      (k) => k !== "record_count" && Array.isArray(obj[k])
+    );
+
+    if (arrayKey) {
+      obj["records"] = obj[arrayKey];
+    } else {
+      // Case 5: no array found - return empty so .map() never throws
+      obj["records"] = [];
+    }
+
+    // Synthesise record_count if the endpoint didn't include it
+    if (!("record_count" in obj)) {
+      obj["record_count"] = (obj["records"] as unknown[]).length;
+    }
+  }
+
+  return json as T;
+}
+
 export class HaloApiClient {
   private config: HaloConfig;
   private cachedToken: CachedToken | null = null;
@@ -111,7 +167,8 @@ export class HaloApiClient {
       );
     }
 
-    return (await response.json()) as T;
+    const json = await response.json();
+    return normalizeListResponse<T>(json);
   }
 
   async post<T = unknown>(
