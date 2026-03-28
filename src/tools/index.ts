@@ -20,6 +20,7 @@ import { registerDeleteTools } from "./delete.js";
 import { registerItemTools } from "./items.js";
 import { registerRecurringInvoiceTools } from "./recurring-invoices.js";
 import { registerCategoryTools } from "./categories.js";
+import { registerWorkflowTools } from "./workflows.js";
 
 export function registerAllTools(
   server: McpServer,
@@ -56,4 +57,7 @@ export function registerAllTools(
   registerItemTools(server, client);
   registerRecurringInvoiceTools(server, client);
   registerCategoryTools(server, client);
+
+  // Phase - Workflow / Compound Tools
+  registerWorkflowTools(server, client);
 }

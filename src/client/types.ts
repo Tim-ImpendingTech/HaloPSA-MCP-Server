@@ -262,3 +262,18 @@ export interface HaloCategory {
   priority_id?: number;
   [key: string]: unknown;
 }
+
+export interface HaloUser {
+  id: number;
+  name: string;
+  firstname?: string;
+  surname?: string;
+  emailaddress?: string;
+  phonenumber?: string;
+  site_id?: number;
+  site_name?: string;
+  client_id?: number;
+  client_name?: string;
+  inactive?: boolean;
+  [key: string]: unknown;
+}
