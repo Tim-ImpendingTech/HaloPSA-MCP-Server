@@ -49,6 +49,7 @@ export function registerDeleteTools(
       "Delete a HaloPSA action (note/update) by ID. This action is irreversible. You must set confirm=true to proceed.",
     inputSchema: {
       action_id: z.number().describe("The action ID to delete"),
+      ticket_id: z.number().describe("Ticket ID the action belongs to"),
       confirm: z
         .boolean()
         .describe("Must be true to confirm deletion"),
@@ -65,7 +66,7 @@ export function registerDeleteTools(
       };
     }
     try {
-      await client.delete(`/Actions/${args.action_id}`);
+      await client.delete(`/Actions/${args.action_id}?ticket_id=${args.ticket_id}`);
       return {
         content: [
           {

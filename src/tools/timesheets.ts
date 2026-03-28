@@ -34,7 +34,7 @@ export function registerTimesheetTools(
   server.registerTool("halo_list_time_entries", {
     title: "List Time Entries",
     description:
-      "List time entries logged against HaloPSA tickets. Time entries are Actions with time recorded. Filters by ticket, agent, or date range.",
+      "List time entries logged against HaloPSA tickets. Time entries are Actions with time recorded. Provide at least one filter (ticket_id or agent_id) — calling with no filters returns empty results.",
     inputSchema: {
       ticket_id: z.number().optional().describe("Filter by ticket ID"),
       agent_id: z.number().optional().describe("Filter by agent ID (who_agentid)"),
@@ -128,6 +128,14 @@ export function registerTimesheetTools(
         .boolean()
         .optional()
         .describe("Whether this entry is billable (default true)"),
+      outcome: z
+        .string()
+        .optional()
+        .describe("Outcome type for the action (e.g. 'Remote Support', 'Note'). Required by some HaloPSA configurations."),
+      outcome_id: z
+        .number()
+        .optional()
+        .describe("Outcome ID (alternative to outcome name)"),
     },
   }, async (args) => {
     try {
@@ -139,6 +147,8 @@ export function registerTimesheetTools(
         traveltime: args.traveltime ?? 0,
         who_agentid: args.agent_id,
         actisbillable: args.actisbillable ?? true,
+        outcome: args.outcome,
+        outcome_id: args.outcome_id,
       });
       return {
         content: [
