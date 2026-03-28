@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloTeam, HaloStatus, HaloListResponse } from "../client/types.js";
+import type { HaloTeam, HaloStatus } from "../client/types.js";
 import { errorResult } from "../utils/errors.js";
 
 export function registerLookupTools(
@@ -14,15 +14,15 @@ export function registerLookupTools(
       "List all HaloPSA ticket statuses. Useful for finding status IDs when creating or updating tickets.",
     inputSchema: {
       type: z
-        .number()
+        .string()
         .optional()
-        .describe("Filter by ticket type ID to get type-specific statuses"),
+        .describe("Filter by status type string, e.g. 'ticket', 'opps', 'prjs'"),
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloStatus>>(
+      const result = await client.getList<HaloStatus>(
         "/Status",
-        { type: args.type }
+        { type: args.type, count: 999 }
       );
       return {
         content: [
@@ -54,7 +54,7 @@ export function registerLookupTools(
     inputSchema: {},
   }, async () => {
     try {
-      const result = await client.get<HaloListResponse<HaloTeam>>("/Team");
+      const result = await client.getList<HaloTeam>("/Team");
       return {
         content: [
           {
@@ -85,8 +85,9 @@ export function registerLookupTools(
     inputSchema: {},
   }, async () => {
     try {
-      const result = await client.get<HaloListResponse<{ id: number; name: string }>>(
-        "/TicketType"
+      const result = await client.getList<{ id: number; name: string }>(
+        "/TicketType",
+        { showall: true, count: 999 }
       );
       return {
         content: [
@@ -118,7 +119,7 @@ export function registerLookupTools(
     inputSchema: {},
   }, async () => {
     try {
-      const result = await client.get<HaloListResponse<{ id: number; name: string }>>(
+      const result = await client.getList<{ id: number; name: string }>(
         "/Priority"
       );
       return {

@@ -5,6 +5,8 @@ import type { HaloTicket, HaloAgent, HaloListResponse } from "../client/types.js
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
+type TicketRecord = HaloTicket & Record<string, unknown>;
+
 export function registerTicketTools(
   server: McpServer,
   client: HaloApiClient
@@ -27,7 +29,7 @@ export function registerTicketTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloTicket>>(
+      const result = await client.getList<HaloTicket>(
         "/Tickets",
         {
           page_size: args.page_size ?? 50,
@@ -77,24 +79,57 @@ export function registerTicketTools(
   server.registerTool("halo_get_ticket", {
     title: "Get Ticket",
     description:
-      "Get a single HaloPSA ticket by ID with full details including all fields.",
+      "Get a single HaloPSA ticket by ID. Returns trimmed fields by default. Set include_full_details=true for the complete raw response.",
     inputSchema: {
       ticket_id: z.number().describe("The ticket ID to retrieve"),
-      includedetails: z
+      include_full_details: z
         .boolean()
         .optional()
-        .describe("Include full ticket details (default true)"),
+        .describe("Return full raw response instead of trimmed fields (default false)"),
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloTicket>(
+      const result = await client.get<TicketRecord>(
         `/Tickets/${args.ticket_id}`,
-        {
-          includedetails: args.includedetails ?? true,
-        }
+        { includedetails: true }
       );
+
+      if (args.include_full_details) {
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      const rawDetails = typeof result.details === "string" ? result.details : "";
+      const detailsTruncated = rawDetails.length > 4000;
+      const details = detailsTruncated ? rawDetails.substring(0, 4000) : rawDetails;
+
+      const trimmed = {
+        id: result.id,
+        summary: result.summary,
+        details,
+        details_truncated: detailsTruncated,
+        status: result.status,
+        status_id: result.status_id,
+        priority: result.priority,
+        priority_id: result.priority_id,
+        client_id: result.client_id,
+        client_name: result.client_name,
+        user_name: result.user_name,
+        agent_name: result.agent_name,
+        team: result.team,
+        dateoccurred: result.dateoccurred,
+        dateclosed: result.dateclosed,
+        deadlinedate: result.deadlinedate,
+        category_1: result.category_1,
+        category_2: result.category_2,
+        category_3: result.category_3,
+        sla_id: result.sla_id,
+        customfields: result.customfields,
+      };
+
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(trimmed, null, 2) }],
       };
     } catch (error) {
       return errorResult(error);
@@ -207,7 +242,7 @@ export function registerTicketTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloTicket>>(
+      const result = await client.getList<HaloTicket>(
         "/Tickets",
         {
           agent_id: args.agent_id,
@@ -261,7 +296,7 @@ export function registerTicketTools(
   }, async (args) => {
     try {
       const me = await client.get<HaloAgent>("/Agent/me");
-      const result = await client.get<HaloListResponse<HaloTicket>>(
+      const result = await client.getList<HaloTicket>(
         "/Tickets",
         {
           agent_id: me.id,
@@ -323,7 +358,7 @@ export function registerTicketTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloTicket>>(
+      const result = await client.getList<HaloTicket>(
         "/Tickets",
         {
           reportedby: args.reportedby,

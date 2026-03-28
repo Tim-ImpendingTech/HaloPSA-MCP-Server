@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloAppointment, HaloListResponse } from "../client/types.js";
+import type { HaloAppointment } from "../client/types.js";
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
@@ -21,7 +21,7 @@ export function registerAppointmentTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloAppointment>>(
+      const result = await client.getList<HaloAppointment>(
         "/Appointment",
         {
           page_size: args.page_size ?? 50,

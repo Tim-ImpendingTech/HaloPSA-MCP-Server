@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloKBArticle, HaloListResponse } from "../client/types.js";
+import type { HaloKBArticle } from "../client/types.js";
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
@@ -18,7 +18,7 @@ export function registerKnowledgeBaseTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloKBArticle>>(
+      const result = await client.getList<HaloKBArticle>(
         "/KBArticle",
         {
           page_size: args.page_size ?? 50,

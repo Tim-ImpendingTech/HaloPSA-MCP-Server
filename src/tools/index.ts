@@ -15,6 +15,8 @@ import { registerAppointmentTools } from "./appointments.js";
 import { registerSupplierTools } from "./suppliers.js";
 import { registerQuotationTools } from "./quotations.js";
 import { registerOpportunityTools } from "./opportunities.js";
+import { registerTimesheetTools } from "./timesheets.js";
+import { registerDeleteTools } from "./delete.js";
 
 export function registerAllTools(
   server: McpServer,
@@ -40,4 +42,10 @@ export function registerAllTools(
   registerSupplierTools(server, client);
   registerQuotationTools(server, client);
   registerOpportunityTools(server, client);
+
+  // Phase - Time & Billing
+  registerTimesheetTools(server, client);
+
+  // Phase - Delete Operations
+  registerDeleteTools(server, client);
 }

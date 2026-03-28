@@ -7,7 +7,31 @@ export interface OAuthTokenResponse {
 
 export interface HaloListResponse<T> {
   record_count: number;
+  page_size?: number;
   records: T[];
+}
+
+/**
+ * Extracts the data array from a HaloPSA list API response.
+ *
+ * The API returns the array under an endpoint-specific key (e.g. "tickets",
+ * "clients", "assets") rather than a generic "records" key. This helper finds
+ * the first array value in the response object and normalises the shape into
+ * a standard HaloListResponse<T>.
+ */
+export function extractListResponse<T>(raw: Record<string, unknown>): HaloListResponse<T> {
+  const record_count = (raw.record_count as number) ?? 0;
+  const page_size = raw.page_size as number | undefined;
+
+  // Find the first value that is an array — that's the data.
+  for (const value of Object.values(raw)) {
+    if (Array.isArray(value)) {
+      return { record_count, page_size, records: value as T[] };
+    }
+  }
+
+  // Fallback: no array found — return empty records.
+  return { record_count, page_size, records: [] };
 }
 
 export interface HaloTicket {
