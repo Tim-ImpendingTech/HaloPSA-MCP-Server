@@ -263,6 +263,18 @@ export interface HaloCategory {
   [key: string]: unknown;
 }
 
+export interface HaloService {
+  id: number;
+  name: string;
+  summary?: string;
+  service_category_id?: number;
+  service_category_name?: string;
+  trackstatus?: boolean;
+  subscriber_count?: number;
+  cost?: number;
+  [key: string]: unknown;
+}
+
 export interface HaloUser {
   id: number;
   name: string;

@@ -21,6 +21,7 @@ import { registerItemTools } from "./items.js";
 import { registerRecurringInvoiceTools } from "./recurring-invoices.js";
 import { registerCategoryTools } from "./categories.js";
 import { registerWorkflowTools } from "./workflows.js";
+import { registerServiceTools } from "./services.js";
 
 export function registerAllTools(
   server: McpServer,
@@ -60,4 +61,7 @@ export function registerAllTools(
 
   // Phase - Workflow / Compound Tools
   registerWorkflowTools(server, client);
+
+  // Phase - Service Catalog
+  registerServiceTools(server, client);
 }
