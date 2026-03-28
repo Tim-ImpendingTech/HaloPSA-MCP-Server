@@ -19,7 +19,12 @@ export interface HaloListResponse<T> {
  * the first array value in the response object and normalises the shape into
  * a standard HaloListResponse<T>.
  */
-export function extractListResponse<T>(raw: Record<string, unknown>): HaloListResponse<T> {
+export function extractListResponse<T>(raw: Record<string, unknown> | unknown[]): HaloListResponse<T> {
+  // Some endpoints (e.g. /Status) return a bare array instead of an object.
+  if (Array.isArray(raw)) {
+    return { record_count: raw.length, records: raw as T[] };
+  }
+
   const record_count = (raw.record_count as number) ?? 0;
   const page_size = raw.page_size as number | undefined;
 
@@ -182,7 +187,7 @@ export interface HaloAppointment {
 
 export interface HaloKBArticle {
   id: number;
-  title?: string;
+  name?: string;
   type?: number;
   inactive?: boolean;
   [key: string]: unknown;

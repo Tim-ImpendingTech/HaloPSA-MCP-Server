@@ -37,7 +37,7 @@ export function registerKnowledgeBaseTools(
                 record_count: result.record_count,
                 articles: result.records.map((a) => ({
                   id: a.id,
-                  title: a.title,
+                  name: a.name,
                   type: a.type,
                   inactive: a.inactive,
                 })),
@@ -78,12 +78,17 @@ export function registerKnowledgeBaseTools(
     description:
       "Create a new HaloPSA knowledge base article.",
     inputSchema: {
-      title: z.string().describe("Article title"),
+      name: z.string().describe("Article title/name"),
+      description: z.string().optional().describe("Article body/content (plain text)"),
       type: z.number().optional().describe("Article type ID"),
     },
   }, async (args) => {
     try {
-      const result = await client.post<HaloKBArticle>("/KBArticle", args);
+      const result = await client.post<HaloKBArticle>("/KBArticle", {
+        name: args.name,
+        description: args.description,
+        type: args.type,
+      });
       return {
         content: [
           {

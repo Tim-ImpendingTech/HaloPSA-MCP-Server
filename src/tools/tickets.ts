@@ -154,28 +154,28 @@ export function registerTicketTools(
       category_1: z.string().optional().describe("Category level 1"),
       category_2: z.string().optional().describe("Category level 2"),
       category_3: z.string().optional().describe("Category level 3"),
+      impact: z.number().optional().describe("Impact level (e.g. 0=unset). Required by some HaloPSA configs"),
+      urgency: z.number().optional().describe("Urgency level (e.g. 0=unset). Required by some HaloPSA configs"),
       sla_id: z.number().optional().describe("SLA ID"),
       deadlinedate: z.string().optional().describe("Deadline date (ISO 8601)"),
     },
   }, async (args) => {
     try {
-      const result = await client.post<HaloTicket>("/Tickets", {
+      // Build payload, filtering undefined values but ensuring required fields have defaults
+      const payload: Record<string, unknown> = {
         summary: args.summary,
-        details: args.details,
         tickettype_id: args.tickettype_id,
-        client_id: args.client_id,
-        site_id: args.site_id,
-        user_id: args.user_id,
-        agent_id: args.agent_id,
-        team_id: args.team_id,
-        status_id: args.status_id,
-        priority_id: args.priority_id,
-        category_1: args.category_1,
-        category_2: args.category_2,
-        category_3: args.category_3,
-        sla_id: args.sla_id,
-        deadlinedate: args.deadlinedate,
-      });
+        category_1: args.category_1 ?? "",
+        impact: args.impact ?? 1,
+        urgency: args.urgency ?? 1,
+      };
+      // Add optional fields only if provided
+      for (const [key, value] of Object.entries(args)) {
+        if (value !== undefined && !(key in payload)) {
+          payload[key] = value;
+        }
+      }
+      const result = await client.post<HaloTicket>("/Tickets", payload);
       return {
         content: [
           {
@@ -207,6 +207,8 @@ export function registerTicketTools(
       category_1: z.string().optional().describe("Updated category level 1"),
       category_2: z.string().optional().describe("Updated category level 2"),
       category_3: z.string().optional().describe("Updated category level 3"),
+      impact: z.number().optional().describe("Updated impact level"),
+      urgency: z.number().optional().describe("Updated urgency level"),
       deadlinedate: z
         .string()
         .optional()
@@ -214,7 +216,12 @@ export function registerTicketTools(
     },
   }, async (args) => {
     try {
-      const result = await client.post<HaloTicket>("/Tickets", args);
+      // Filter undefined values to avoid sending nulls to API
+      const payload: Record<string, unknown> = { id: args.id };
+      for (const [key, value] of Object.entries(args)) {
+        if (value !== undefined) payload[key] = value;
+      }
+      const result = await client.post<HaloTicket>("/Tickets", payload);
       return {
         content: [
           {

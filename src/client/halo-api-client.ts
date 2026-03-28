@@ -124,7 +124,7 @@ export class HaloApiClient {
     path: string,
     params?: Record<string, unknown>
   ): Promise<HaloListResponse<T>> {
-    const raw = await this.get<Record<string, unknown>>(path, params);
+    const raw = await this.get<Record<string, unknown> | unknown[]>(path, params);
     return extractListResponse<T>(raw);
   }
 
