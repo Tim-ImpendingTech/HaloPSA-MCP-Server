@@ -17,6 +17,9 @@ import { registerQuotationTools } from "./quotations.js";
 import { registerOpportunityTools } from "./opportunities.js";
 import { registerTimesheetTools } from "./timesheets.js";
 import { registerDeleteTools } from "./delete.js";
+import { registerItemTools } from "./items.js";
+import { registerRecurringInvoiceTools } from "./recurring-invoices.js";
+import { registerCategoryTools } from "./categories.js";
 
 export function registerAllTools(
   server: McpServer,
@@ -48,4 +51,9 @@ export function registerAllTools(
 
   // Phase - Delete Operations
   registerDeleteTools(server, client);
+
+  // Phase - Billing & Configuration
+  registerItemTools(server, client);
+  registerRecurringInvoiceTools(server, client);
+  registerCategoryTools(server, client);
 }

@@ -230,3 +230,35 @@ export interface HaloStatus {
   name: string;
   [key: string]: unknown;
 }
+
+export interface HaloItem {
+  id: number;
+  name: string;
+  baseprice?: number;
+  costprice?: number;
+  taxcode?: number;
+  nominalcode?: string;
+  assetgroup_name?: string;
+  supplier_name?: string;
+  [key: string]: unknown;
+}
+
+export interface HaloRecurringInvoice {
+  id: number;
+  client_id?: number;
+  client_name?: string;
+  total?: number;
+  contract_id?: number;
+  contract_ref?: string;
+  [key: string]: unknown;
+}
+
+export interface HaloCategory {
+  id: number;
+  value: string;
+  category_name?: string;
+  type_id?: number;
+  sla_id?: number;
+  priority_id?: number;
+  [key: string]: unknown;
+}
