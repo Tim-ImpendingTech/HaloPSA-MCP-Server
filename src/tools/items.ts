@@ -1,24 +1,25 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloSupplier } from "../client/types.js";
+import type { HaloItem } from "../client/types.js";
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
-export function registerSupplierTools(
+export function registerItemTools(
   server: McpServer,
   client: HaloApiClient
 ): void {
-  server.registerTool("halo_list_suppliers", {
-    title: "List Suppliers",
-    description: "List HaloPSA suppliers.",
+  server.registerTool("halo_list_items", {
+    title: "List Items",
+    description:
+      "List HaloPSA billable items/products. These are line items used on invoices, quotes, and sales orders.",
     inputSchema: {
       ...paginationSchema,
     },
   }, async (args) => {
     try {
-      const result = await client.getList<HaloSupplier>(
-        "/Supplier",
+      const result = await client.getList<HaloItem>(
+        "/Item",
         {
           page_size: args.page_size ?? 50,
           page_no: args.page_no ?? 1,
@@ -34,12 +35,14 @@ export function registerSupplierTools(
             text: JSON.stringify(
               {
                 record_count: result.record_count,
-                suppliers: result.records.map((s) => ({
-                  id: s.id,
-                  name: s.name,
-                  phone_number: s.phone_number,
-                  email: s.email,
-                  website: s.website,
+                items: result.records.map((i) => ({
+                  id: i.id,
+                  name: i.name,
+                  baseprice: i.baseprice,
+                  costprice: i.costprice,
+                  nominalcode: i.nominalcode,
+                  assetgroup_name: i.assetgroup_name,
+                  supplier_name: i.supplier_name,
                 })),
               },
               null,
@@ -53,17 +56,17 @@ export function registerSupplierTools(
     }
   });
 
-  server.registerTool("halo_get_supplier", {
-    title: "Get Supplier",
+  server.registerTool("halo_get_item", {
+    title: "Get Item",
     description:
-      "Get a single HaloPSA supplier by ID with full details.",
+      "Get a single HaloPSA item/product by ID with full details.",
     inputSchema: {
-      supplier_id: z.number().describe("The supplier ID to retrieve"),
+      item_id: z.number().describe("The item ID to retrieve"),
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloSupplier>(
-        `/Supplier/${args.supplier_id}`
+      const result = await client.get<HaloItem>(
+        `/Item/${args.item_id}`
       );
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

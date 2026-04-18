@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloAction, HaloListResponse } from "../client/types.js";
+import type { HaloAction } from "../client/types.js";
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
@@ -23,7 +23,7 @@ export function registerActionTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloAction>>(
+      const result = await client.getList<HaloAction>(
         "/Actions",
         {
           ticket_id: args.ticket_id,

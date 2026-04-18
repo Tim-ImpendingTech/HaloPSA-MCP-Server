@@ -15,6 +15,14 @@ import { registerAppointmentTools } from "./appointments.js";
 import { registerSupplierTools } from "./suppliers.js";
 import { registerQuotationTools } from "./quotations.js";
 import { registerOpportunityTools } from "./opportunities.js";
+import { registerTimesheetTools } from "./timesheets.js";
+import { registerDeleteTools } from "./delete.js";
+import { registerItemTools } from "./items.js";
+import { registerRecurringInvoiceTools } from "./recurring-invoices.js";
+import { registerCategoryTools } from "./categories.js";
+import { registerWorkflowTools } from "./workflows.js";
+import { registerServiceTools } from "./services.js";
+import { registerRunbookTools } from "./runbooks.js";
 
 export function registerAllTools(
   server: McpServer,
@@ -40,4 +48,24 @@ export function registerAllTools(
   registerSupplierTools(server, client);
   registerQuotationTools(server, client);
   registerOpportunityTools(server, client);
+
+  // Phase - Time & Billing
+  registerTimesheetTools(server, client);
+
+  // Phase - Delete Operations
+  registerDeleteTools(server, client);
+
+  // Phase - Billing & Configuration
+  registerItemTools(server, client);
+  registerRecurringInvoiceTools(server, client);
+  registerCategoryTools(server, client);
+
+  // Phase - Workflow / Compound Tools
+  registerWorkflowTools(server, client);
+
+  // Phase - Service Catalog
+  registerServiceTools(server, client);
+
+  // Phase - Integration Runbooks
+  registerRunbookTools(server, client);
 }

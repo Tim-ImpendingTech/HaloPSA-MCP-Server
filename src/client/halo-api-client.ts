@@ -1,5 +1,6 @@
 import type { HaloConfig } from "../config.js";
 import type { OAuthTokenResponse, HaloListResponse } from "./types.js";
+import { extractListResponse } from "./types.js";
 
 interface CachedToken {
   accessToken: string;
@@ -112,6 +113,19 @@ export class HaloApiClient {
     }
 
     return (await response.json()) as T;
+  }
+
+  /**
+   * Convenience wrapper for list endpoints that return data under an
+   * endpoint-specific key (e.g. "tickets", "clients", "assets").
+   * Normalises the response into a standard HaloListResponse<T>.
+   */
+  async getList<T>(
+    path: string,
+    params?: Record<string, unknown>
+  ): Promise<HaloListResponse<T>> {
+    const raw = await this.get<Record<string, unknown> | unknown[]>(path, params);
+    return extractListResponse<T>(raw);
   }
 
   async post<T = unknown>(

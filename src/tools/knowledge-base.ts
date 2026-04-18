@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { HaloApiClient } from "../client/halo-api-client.js";
-import type { HaloKBArticle, HaloListResponse } from "../client/types.js";
+import type { HaloKBArticle } from "../client/types.js";
 import { paginationSchema } from "../utils/pagination.js";
 import { errorResult } from "../utils/errors.js";
 
@@ -18,7 +18,7 @@ export function registerKnowledgeBaseTools(
     },
   }, async (args) => {
     try {
-      const result = await client.get<HaloListResponse<HaloKBArticle>>(
+      const result = await client.getList<HaloKBArticle>(
         "/KBArticle",
         {
           page_size: args.page_size ?? 50,
@@ -37,7 +37,7 @@ export function registerKnowledgeBaseTools(
                 record_count: result.record_count,
                 articles: result.records.map((a) => ({
                   id: a.id,
-                  title: a.title,
+                  name: a.name,
                   type: a.type,
                   inactive: a.inactive,
                 })),
@@ -78,12 +78,17 @@ export function registerKnowledgeBaseTools(
     description:
       "Create a new HaloPSA knowledge base article.",
     inputSchema: {
-      title: z.string().describe("Article title"),
+      name: z.string().describe("Article title/name"),
+      description: z.string().optional().describe("Article body/content (plain text)"),
       type: z.number().optional().describe("Article type ID"),
     },
   }, async (args) => {
     try {
-      const result = await client.post<HaloKBArticle>("/KBArticle", args);
+      const result = await client.post<HaloKBArticle>("/KBArticle", {
+        name: args.name,
+        description: args.description,
+        type: args.type,
+      });
       return {
         content: [
           {
