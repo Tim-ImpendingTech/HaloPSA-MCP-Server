@@ -71,4 +71,34 @@ export function registerRunbookTools(
       return errorResult(error);
     }
   });
+
+  server.registerTool("halo_delete_runbook", {
+    title: "Delete Runbook",
+    description:
+      "Delete a HaloPSA Integration Runbook (Webhook) by id. This action is irreversible. You must set confirm=true to proceed.",
+    inputSchema: {
+      id: z.string().describe("Runbook UUID"),
+      confirm: z.boolean().describe("Must be true to confirm deletion"),
+    },
+  }, async (args) => {
+    if (args.confirm !== true) {
+      return {
+        content: [{
+          type: "text",
+          text: "You must set confirm: true to delete a runbook. This action is irreversible.",
+        }],
+      };
+    }
+    try {
+      await client.delete(`/Webhook/${args.id}`);
+      return {
+        content: [{
+          type: "text",
+          text: `Runbook ${args.id} deleted successfully.`,
+        }],
+      };
+    } catch (error) {
+      return errorResult(error);
+    }
+  });
 }
