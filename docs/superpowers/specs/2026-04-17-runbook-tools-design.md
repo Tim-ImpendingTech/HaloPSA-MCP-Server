@@ -39,22 +39,24 @@ The existing `HaloApiClient` already provides `get`, `getList`, `post`, `delete`
 
 ## Tool Specifications
 
+> **Endpoint asymmetry discovered during implementation (2026-04-17):** Halo's API splits read and write for runbooks across two endpoints, and Services-auth API apps (client-credentials flow) have restricted read visibility. Read tools use `/WebhookRepository` and only see shipped library templates; tenant-customized runbooks are invisible to this auth type. Write tools use `/Webhook` and work for all runbooks. See the Risks section below.
+
 ### `halo_list_runbooks`
 
-- **HTTP:** `GET /Webhook` (client prepends `/api/`)
+- **HTTP:** `GET /WebhookRepository` (client prepends `/api/`)
 - **Input (Zod):**
   - `search?: string` — substring match on runbook name
-  - `page_size?: number` (default 50) — matches existing list tools in the repo (`items.ts`, `projects.ts`, etc.)
-  - `page_no?: number` (default 1)
-- **Output:** JSON-stringified array of runbook summaries as returned by Halo.
+- **Output:** JSON-stringified array of runbook summaries from Halo's shared repository (library templates).
+- **Limitation:** returns only runbooks visible to Services-auth API apps — typically only shipped Halo library templates (Azure OpenAI, OpenAI Suggestions, etc.), not tenant-customized runbooks. Pagination params removed because the underlying endpoint returns a small bare array.
 
 ### `halo_get_runbook`
 
-- **HTTP:** `GET /Webhook/{id}`
+- **HTTP:** `GET /WebhookRepository/{id}`
 - **Input (Zod):**
   - `id: string` — runbook UUID (Halo uses UUIDs for these)
-- **Output:** JSON-stringified full runbook object, including `variables`, `steps`, `events`, etc.
-- **Primary use:** payload discovery. Callers read an existing runbook (e.g. "AI Insights") to learn the exact JSON shape Halo expects before constructing their own `halo_create_runbook` payload.
+- **Output:** JSON-stringified full runbook object including `steps`, configuration fields, etc.
+- **Primary use:** payload discovery. Callers read a library template (e.g. "Azure OpenAI Suggestions") to learn the JSON shape Halo expects before constructing their own `halo_create_runbook` payload.
+- **Limitation:** will 404 on runbooks created in your own tenant, since they aren't exposed to Services-auth reads.
 
 ### `halo_create_runbook`
 
@@ -113,10 +115,10 @@ Bootstrapping a test framework for the repo is tracked as a separate future task
 
 ## Risks and Open Questions
 
-1. **Exact path casing.** Halo's endpoint appeared in browser network traffic as `/api/Webhook` (capital W, no trailing `s`). The implementation uses `/Webhook` (client prepends `/api/`). Verified against the Playwright session's 400 response URL. Low risk.
+1. **Endpoint split and read-visibility limitation (confirmed).** Halo serves runbook reads from `/WebhookRepository` and writes at `/Webhook`. Services-auth API apps can only *read* shipped library templates from `/WebhookRepository`; tenant-customized runbooks (the ones you create in the admin UI) are invisible via these endpoints. Writes to `/Webhook` succeed for all runbooks. An integration-test confirmed a create/delete round-trip works and returns the expected UUID; a GET by that same UUID immediately after creation returns 404. Workaround: after creating a runbook through these tools, verify in the Halo admin UI rather than through `halo_get_runbook`. To regain full read visibility, the API app would need to be re-registered with "Username & Password" auth type (full agent session) rather than "Client ID and Secret (Services)", which is out of scope here.
 
-2. **OAuth scope.** The existing MCP server authenticates with scope `all`, which should include the Webhook resource. If Halo returns 403 on the first call, we'll narrow this. Low risk, easy to diagnose.
+2. **OAuth permissions (confirmed).** The MCP-Server-Dev app needs `all:standard` and `admin:webhooks` permissions granted. Scope is set via the `HALOPSA_SCOPE` env var in `.mcp.json`. Without `admin:webhooks`, `/Webhook` returns 401.
 
-3. **Array-wrap on POST.** Halo convention: POST bodies are array-wrapped. The existing `client.post()` already does this. The caller passes a single object; the client wraps. No change.
+3. **Array-wrap on POST.** Halo convention: POST bodies are array-wrapped. The existing `client.post()` already does this. The caller passes a single object; the client wraps. Confirmed working.
 
-4. **Pagination convention:** the repo passes `page_size`/`page_no` to Halo for all list endpoints. `halo_list_runbooks` follows the same pattern.
+4. **Pagination convention:** `/WebhookRepository` returns a bare array without pagination — `page_size`/`page_no` params removed from `halo_list_runbooks` since they are ignored by this endpoint.

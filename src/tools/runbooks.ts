@@ -10,18 +10,14 @@ export function registerRunbookTools(
   server.registerTool("halo_list_runbooks", {
     title: "List Runbooks",
     description:
-      "List HaloPSA Integration Runbooks (internally called 'Webhooks'). Use search to filter by name. Returns an array of runbook summaries. Call halo_get_runbook on an id to fetch the full definition — useful as a template for halo_create_runbook.",
+      "List HaloPSA Integration Runbooks (internally 'Webhooks') from the repository. NOTE: Halo's Services-auth API apps only see shipped library-template runbooks (Azure OpenAI, OpenAI Suggestions, etc.) via /WebhookRepository — tenant-customized runbooks created in your instance are not returned here. This tool is mainly useful for payload discovery: read a library template to learn the JSON shape, then use halo_create_runbook. To inspect your own runbooks, use the Halo admin UI under Config → Integrations → Custom Integrations → Integration Runbooks.",
     inputSchema: {
       search: z.string().optional().describe("Substring match on runbook name"),
-      page_size: z.number().optional().describe("Results per page (default 50)"),
-      page_no: z.number().optional().describe("Page number (default 1)"),
     },
   }, async (args) => {
     try {
-      const result = await client.getList<Record<string, unknown>>("/Webhook", {
+      const result = await client.getList<Record<string, unknown>>("/WebhookRepository", {
         search: args.search,
-        page_size: args.page_size ?? 50,
-        page_no: args.page_no ?? 1,
       });
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -34,13 +30,13 @@ export function registerRunbookTools(
   server.registerTool("halo_get_runbook", {
     title: "Get Runbook",
     description:
-      "Fetch a single HaloPSA Integration Runbook (Webhook) by id, returning its full JSON including variables, steps, events, and all other fields. Useful as a template for halo_create_runbook — clone a similar existing runbook's JSON structure.",
+      "Fetch a single runbook from Halo's library repository by id, returning its full JSON including steps and configuration. NOTE: This reads from /WebhookRepository (library templates only) — it will 404 on runbooks created in your own tenant, which are not exposed to Services-auth API apps. Primary use: payload discovery — clone a library template's structure when calling halo_create_runbook.",
     inputSchema: {
-      id: z.string().describe("Runbook UUID"),
+      id: z.string().describe("Runbook UUID (from halo_list_runbooks)"),
     },
   }, async (args) => {
     try {
-      const result = await client.get<Record<string, unknown>>(`/Webhook/${args.id}`);
+      const result = await client.get<Record<string, unknown>>(`/WebhookRepository/${args.id}`);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
@@ -52,7 +48,7 @@ export function registerRunbookTools(
   server.registerTool("halo_create_runbook", {
     title: "Create Runbook",
     description:
-      "Create a HaloPSA Integration Runbook (Webhook) from a raw JSON payload. The runbook object is forwarded to Halo as-is; the caller owns the JSON shape. Recommended workflow: call halo_list_runbooks + halo_get_runbook on a similar existing runbook first, then mirror its structure. Halo validates server-side; 400 errors are surfaced verbatim.",
+      "Create a HaloPSA Integration Runbook via POST /Webhook. Write path is confirmed working. Payload is forwarded to Halo as-is; the caller owns the JSON shape. Recommended workflow: call halo_list_runbooks + halo_get_runbook on a library template first to learn the structure, then mirror it. Halo validates server-side; 400 errors are surfaced verbatim. NOTE: after creation, the runbook may not appear via halo_list_runbooks or halo_get_runbook (Halo filters tenant-created runbooks from Services-auth reads) — verify in the Halo admin UI. Save the returned `id` — you'll need it for halo_delete_runbook if you want to undo.",
     inputSchema: {
       runbook: z
         .object({})
