@@ -48,4 +48,27 @@ export function registerRunbookTools(
       return errorResult(error);
     }
   });
+
+  server.registerTool("halo_create_runbook", {
+    title: "Create Runbook",
+    description:
+      "Create a HaloPSA Integration Runbook (Webhook) from a raw JSON payload. The runbook object is forwarded to Halo as-is; the caller owns the JSON shape. Recommended workflow: call halo_list_runbooks + halo_get_runbook on a similar existing runbook first, then mirror its structure. Halo validates server-side; 400 errors are surfaced verbatim.",
+    inputSchema: {
+      runbook: z
+        .object({})
+        .passthrough()
+        .describe(
+          "Full Halo runbook JSON object. At minimum include name (string) and enabled (bool). Add variables, steps, events, etc. as needed. See halo_get_runbook output for the full shape."
+        ),
+    },
+  }, async (args) => {
+    try {
+      const result = await client.post<Record<string, unknown>>("/Webhook", args.runbook);
+      return {
+        content: [{ type: "text", text: `Runbook created:\n${JSON.stringify(result, null, 2)}` }],
+      };
+    } catch (error) {
+      return errorResult(error);
+    }
+  });
 }
